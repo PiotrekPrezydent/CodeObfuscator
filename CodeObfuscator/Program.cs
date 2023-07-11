@@ -10,15 +10,15 @@ namespace CodeObfuscator
 
     class MainProgram
     {
-        static TransformerManager _managerInstance;
+        static TransformerManager? _managerInstance;
         static void Main(string[] args)
         {
-
             Console.WriteLine("Give path to assembly that you want to obfuscate");
+            string? modulePath = Console.ReadLine();
+            if (modulePath == null)
+                return;
 
-            string modulePath = Console.ReadLine();
             ObfuscateFile(modulePath);
-
         }
 
         static void ObfuscateFile(string mainPath)
@@ -28,7 +28,10 @@ namespace CodeObfuscator
             _managerInstance = new TransformerManager(baseModule);
             _managerInstance.GetTransformers().ForEach(t => t.Transform(baseModule));
             SplitPath(mainPath, out string fileNameWithPath, out string fileExtension);
-            baseModule.Write(fileNameWithPath + "-OBFUSCATED" + fileExtension);
+            baseModule.Write(fileNameWithPath+"-Temp"+fileExtension);
+            //baseModule.Dispose();
+            //File.Delete(mainPath);
+            //File.Move(fileNameWithPath + "-Temp" + fileExtension, mainPath);
         }
 
         static void SplitPath(string FilePath,out string fileNameWithPath,out string fileExtension)

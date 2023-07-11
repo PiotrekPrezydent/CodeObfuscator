@@ -1,6 +1,6 @@
-﻿namespace CodeObfuscator.MonoBehaviour
+﻿namespace CodeObfuscator.Consts
 {
-    static class MonoBehaviourMethods
+    internal static class Constants
     {
         public static readonly List<string> MonoBehaviourMethodsList = new List<string>
         {
@@ -104,5 +104,19 @@
             "FindObjectsOfType",
             "Instantiate",
         };
+
+        public static readonly List<string> MonoBehaviourPropertiesList = new List<string>
+        {
+            "runInEditMode",
+            "useGUILayout",
+            "enabled",
+            "isActiveAndEnabled",
+            "gameObject",
+            "tag",
+            "transform",
+            "hideFlags",
+            "name",
+        };
+
     }
 }
