@@ -1,26 +1,30 @@
-﻿using CodeObfuscator.Consts;
-using dnlib.DotNet;
+﻿using dnlib.DotNet;
 
-namespace CodeObfuscator.Transform
+namespace CodeObfuscator
 {
-    internal sealed class RenameTransformer : Transformer
+    public static class Obfuscator
     {
-        const int minCharacters = 8;
-        const int maxCharacters = 32;
-        const int minASCI = 65;
-        const int maxASCI = 90;
-        List<string> generatedNames;
-
-        public RenameTransformer(ModuleDefMD module) : base(module,"Renamer", TransformType.Rename)
+        public static void ObfuscateFile(string mainPath)
         {
-            this.Module = module;
+            ModuleDefMD baseModule;
+            baseModule = ModuleDefMD.Load(mainPath);
+            SplitPath(mainPath, out string fileNameWithPath, out string fileExtension);
+            baseModule.Write(fileNameWithPath + "-Temp" + fileExtension);
+            //baseModule.Dispose();
+            //File.Delete(mainPath);
+            //File.Move(fileNameWithPath + "-Temp" + fileExtension, mainPath);
+
+            void SplitPath(string FilePath, out string fileNameWithPath, out string fileExtension)
+            {
+                int dotIndex = FilePath.LastIndexOf(".");
+                fileNameWithPath = FilePath.Substring(0, dotIndex);
+                fileExtension = "." + FilePath.Substring(dotIndex + 1);
+            }
         }
 
-        //Preforms Name transform on module (.exe or .dll file) for valid methods, fields and parameters
-        public override void Transform(ModuleDefMD module)
+        static void RenameMethodsAndFields(ModuleDefMD module)
         {
             string oldName;
-            generatedNames = new List<string>();
 
             foreach (var type in module.Types)
             {
@@ -37,7 +41,7 @@ namespace CodeObfuscator.Transform
                     if (field.HasCustomAttributes)
                         continue;
 
-                    if(field.Access == FieldAttributes.Private)
+                    if (field.Access == FieldAttributes.Private)
                     {
                         oldName = field.Name;
                         field.Name = GenerateNewName();
@@ -54,13 +58,9 @@ namespace CodeObfuscator.Transform
                     if (method.HasCustomAttributes)
                         continue;
                     Console.WriteLine("^^^^^^^^ Statring to preform changes on Method named: " + method.Name + " ^^^^^^^^");
-
-                    if (IsMethodObfuscutable(method))
-                    {
-                        oldName = method.Name;
-                        method.Name = GenerateNewName();
-                        Console.WriteLine("Changed Method name: " + oldName + " To: " + method.Name);
-                    }
+                    oldName = method.Name;
+                    method.Name = GenerateNewName();
+                    Console.WriteLine("Changed Method name: " + oldName + " To: " + method.Name);
 
                     Console.WriteLine("\n");
 
@@ -75,26 +75,14 @@ namespace CodeObfuscator.Transform
                 }
                 Console.WriteLine("\n\n\n");
             }
-           
-        }
 
-        //Check if method is private, not used in main processes and dont inheritance from monobeheviour
-        bool IsMethodObfuscutable(MethodDef method)
-        {
-            if (method.Access != MethodAttributes.Private)
-                return false;
-            if (method.Name == ".cctor" || method.Name == ".ctor")
-                return false;
-            if (Constants.MonoBehaviourMethodsList.Any(e => e == method.Name.String))
-                return false;
-
-            return true;
-        }
-        string GenerateNewName()
-        {
-            string newName = "";
-            while (generatedNames.Contains(newName) || newName == "")
+            string GenerateNewName()
             {
+                const int minCharacters = 8;
+                const int maxCharacters = 32;
+                const int minASCI = 65;
+                const int maxASCI = 90;
+                string newName = "";
                 Random rnd = new Random();
                 int numberOfCharacters = rnd.Next(minCharacters, maxCharacters + 1);
                 newName = "";
@@ -105,10 +93,8 @@ namespace CodeObfuscator.Transform
                     char letter = (char)x;
                     newName += letter.ToString();
                 }
+                return newName;
             }
-            generatedNames.Add(newName);
-            return newName;
         }
-
     }
 }
